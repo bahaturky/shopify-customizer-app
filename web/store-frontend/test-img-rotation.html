@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Text Outline with Rotation</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="400" height="200"></canvas>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const text = "Hello, Canvas!";
+        const x = 100;
+        const y = 100;
+        const rotationAngle = Math.PI / 6; // Rotate by 30 degrees (π/6 radians)
+
+        // Set the font properties
+        ctx.font = "30px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        // Set the text color to red
+        ctx.fillStyle = "red";
+
+        // Set the outline width and color
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "blue";
+
+        // Save the current canvas state
+        ctx.save();
+
+        // Translate to the center of the text
+        ctx.translate(x, y);
+
+        // Rotate the canvas around the center of the text
+        ctx.rotate(rotationAngle);
+
+        // Draw the text with the outline
+        ctx.strokeText(text, -ctx.measureText(text).width / 2, 0);
+
+        // Draw the text fill
+        ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
+
+        // Restore the canvas state (undo the translation and rotation)
+        ctx.restore();
+    </script>
+</body>
+</html>

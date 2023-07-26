@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fabric.js</title>
+  <script src="assets/js/fabric.min.js"></script>
+   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script> -->
+   <style type="text/css">
+     body{
+          display: flex;
+    align-items: flex-start;
+     }
+   </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="800"></canvas>
+
+  <button onclick="bridgeText()"> Bridge Effect</button> 
+
+  <script>
+    const canvas = new fabric.Canvas('canvas');
+
+
+    function addTextImage(text, getFontSize, type) {
+      // Create a temporary canvas to measure the text dimensions
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const rotationAngle = 75; // Rotate by 30 degrees (π/6 radians)
+      // Style the text (for measuring purposes)
+      const fontSize = getFontSize;
+      tempCtx.font = `${fontSize}px Abel`;
+
+      // Measure the width and height of the text
+      const textWidth = tempCtx.measureText(text).width;
+      const textHeight = fontSize;
+
+      // Create a temporary canvas with auto dimensions to draw the text
+      let canvasWidth = textWidth; // Add padding to the text width
+      let canvasHeight = textHeight; // Add padding to the text height
+
+
+      // Calculate the required dimensions for the rotated text
+      const rotatedWidth = Math.abs(Math.cos(rotationAngle) * textWidth) + Math.abs(Math.sin(rotationAngle) * textHeight);
+      const rotatedHeight = Math.abs(Math.sin(rotationAngle) * textWidth) + Math.abs(Math.cos(rotationAngle) * textHeight);
+
+      canvasWidth = rotatedWidth;
+      canvasHeight = rotatedHeight;
+
+      const autoCanvas = document.createElement('canvas');
+      autoCanvas.width = canvasWidth;
+      autoCanvas.height = canvasWidth;
+
+      // Get the 2D context of the temporary canvas
+      const ctx = autoCanvas.getContext('2d');
+      // Style the text (for drawing purposes)
+      ctx.font = `${fontSize}px Abel`;
+      ctx.fillStyle = 'black'; // Set text color
+      ctx.textAlign = 'center'; // Center the text
+      ctx.textBaseline = "middle";
+      ctx.translate(canvasWidth/2, canvasHeight/2);
+
+      // Calculate the y-coordinate to vertically center the text
+      const textY = (canvasHeight - fontSize) / 2 + fontSize * 0.5;
+
+      // Draw the text on the temporary canvas
+      
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "orange";
+      ctx.rotate(rotationAngle);
+      ctx.strokeText(text, -canvasWidth/2, 0);
+      ctx.fillText(text, -canvasWidth/2, 0);
+
+      // Create an image object from the temporary canvas
+      const img = new Image();
+      img.src = autoCanvas.toDataURL();
+
+      const fabricImage = new fabric.Image(img, {
+        // angle:45,
+        width: canvasWidth,
+        height: canvasHeight,
+        scaleX: 1,
+        scaleY:1,
+        "object_type":'text',
+        "text":text,
+        "text_effect":"normal",
+        "text_color": "#000000",
+        "text_color_name": "black",
+        "text_font_size": fontSize,
+        "text_font_family": 'Abel',
+        "outline_color": "#00000000",
+        "outline_color_name": "None",
+        "outline_width": "1",
+        "rotate_angle":0,
+        left:0,
+        top:0,
+        lockScalingFlip: true,
+        padding:1
+      });
+      fabricImage.setControlsVisibility({
+          tl: false,
+          bl: false,
+          tr: false,
+          br: true,
+          ml: false,
+          mb: false,
+          mr: false,
+          mt: false,
+          mtr: false
+      });
+      let scale_x = canvasWidth/fabricImage.width;
+      let scale_y = 30 / fabricImage.height;
+      let scale = scale_x;
+      if(scale_x > scale_y){
+        scale = scale_y;
+      }
+      fabricImage.set({
+          scaleX:scale,
+          scaleY:scale
+      })
+
+      // Add the Fabric.js image object to the canvas
+      console.log("Fabric Image => ", fabricImage);
+      // canvas.add(fabricImage);
+      if(type == 'add'){
+        canvas.add(fabricImage);
+        canvas.setActiveObject(fabricImage)
+      }else{
+        canvas.getActiveObject().setSrc(autoCanvas.toDataURL());
+      }
+
+      // Render the canvas
+
+      canvas.renderAll();
+    }
+
+    // Call function on load
+    addTextImage('Hello, Fabric.js!', 150, 'add');
+
+    // canvas.on('object:scaling', function(e) {
+    //   let selectedObject = canvas.getActiveObject();
+    //   var newFont = selectedObject.height*selectedObject.scaleY;
+    //   addTextImage(selectedObject.text, newFont, 'update');
+    // });
+
+
+//     function renderBridgeText(text, canvasWidth, canvasHeight) {
+//     const tempCanvas = document.createElement('canvas');
+//     tempCanvas.width = canvasWidth;
+//     tempCanvas.height = canvasHeight;
+//     const ctx = tempCanvas.getContext('2d');
+
+//     let curve = 100;
+//     let textHeight = 64;
+//     let offsetY = 100;
+//     let top = canvasHeight * 0.5 - textHeight;
+
+//     ctx.fillStyle = 'black'; // Set the text color (you can change this)
+
+//     // Calculate the width of the text
+//     const textWidth = ctx.measureText(text).width;
+//     const centerOffsetX = (canvasWidth - textWidth) * 0.5;
+
+//     // Draw the text on the off-screen canvas
+//     ctx.fillText(text, centerOffsetX, offsetY);
+
+//     /// slide and dice
+//     let i = canvasWidth;
+//     const angleSteps = 90; // You can adjust this value for a smoother or more pronounced effect
+
+//     while (i >= 0) {
+//         i--;
+//         let y = curve * Math.sin(i * angleSteps * Math.PI / 180);
+//         let height = textHeight * 3 - y;
+
+//         // Draw the text on the main canvas with the bridge effect
+//         ctx.drawImage(tempCanvas, i, offsetY, 1, textHeight, i, top, 1, height);
+//     }
+
+//     // Convert the off-screen canvas to fabric image
+//     const dataURL = tempCanvas.toDataURL();
+//     fabric.Image.fromURL(dataURL, function (img) {
+//         // canvas.clear();
+//         // canvas.dispose();
+
+//         // Add the fabric image to the canvas
+//         canvas.add(img);
+//     });
+// }
+
+
+function renderBridgeText(text) {
+
+    const canvas1 = document.createElement('canvas');
+    const ctx = canvas1.getContext('2d');
+
+    let fontSize = 120;
+
+    const os = document.createElement('canvas');
+    const octx = os.getContext('2d');
+    os.width = canvas.getWidth();
+    os.height = canvas.getHeight();
+    octx.font = `${fontSize}px Abel`;
+    octx.textBaseline = 'top';
+    // octx.textAlign = 'center';
+
+    const width = octx.measureText(text).width;
+    const height = fontSize*1.8;
+    const angleSteps = 180 / width;
+
+    canvas1.width = width;
+    canvas1.height = height;
+    console.log('Text => ', text , 'Width: ', width);
+    console.log('height: ', height);
+
+        let curve = 50;
+        // offsetY = 100;
+        let textHeight = fontSize;
+        let top = height * 0.55 - textHeight;
+
+        // octx.clearRect(0, 0, width, height);
+        // ctx.clearRect(0, 0, width, height);
+
+        octx.fillText(text, 0, 0);
+
+        /// slide and dice
+        let i = width;
+
+        let y = 0;
+        while (i >= 0) {
+            i--;
+            y = curve * Math.sin(i * angleSteps * Math.PI / 180);
+
+            ctx.drawImage(os, i, 0, 1, textHeight, i, top, 1, textHeight * 2 - y);
+        }
+
+
+        // canvas.clear()
+        let selectedObject = canvas.getActiveObject();
+        let currentWidth = selectedObject.width * selectedObject.scaleX;
+        let currentHeight = selectedObject.height * selectedObject.scaleY;
+
+        console.log("current width => ", currentWidth);
+        console.log("current height => ", currentHeight);
+
+        console.log("Canvas New Image => ", canvas1.toDataURL());
+
+        selectedObject.setSrc(canvas1.toDataURL());
+
+      //   const bridgeImage = new fabric.Image(canvas1, {
+      //   // angle:45,
+      //   // width: currentWidth,
+      //   // height: currentHeight,
+      //   "object_type":'text',
+      //   "text":text,
+      //   "text_effect":"normal",
+      //   "text_color": "#000000",
+      //   "text_color_name": "black",
+      //   "text_font_size": selectedObject.fontSize,
+      //   "text_font_family": 'Abel',
+      //   "outline_color": "#00000000",
+      //   "outline_color_name": "None",
+      //   "outline_width": "1",
+      //   "rotate_angle":0,
+      //   left:0,
+      //   top:0,
+      //   lockScalingFlip: true,
+      //   padding:1
+      // });
+      // bridgeImage.setControlsVisibility({
+      //     tl: false,
+      //     bl: false,
+      //     tr: false,
+      //     br: true,
+      //     ml: false,
+      //     mb: false,
+      //     mr: false,
+      //     mt: false,
+      //     mtr: false
+      // });
+      let scale_x = currentWidth/selectedObject.width;
+      let scale_y = currentHeight/selectedObject.height;
+      let scale = scale_x;
+      if(scale_x > scale_y){
+        scale = scale_y;
+      }
+      selectedObject.set({
+          scaleX:scale,
+          scaleY:scale
+      })
+
+        // canvas.remove(canvas.getActiveObject());
+        // canvas.add(bridgeImage)
+      setTimeout(function(){
+        canvas.setActiveObject(selectedObject)
+        canvas.renderAll();
+      },100)
+        
+    }
+
+function bridgeText() {
+ renderBridgeText('Hello, Fabric.js!');
+}
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .rotate-image {
+            transform: rotateZ(45deg); /* Adjust the rotation angle as needed */
+        }
+    </style>
+</head>
+<body>
+    <img id="original-image" src="blob:null/61fcd5e8-1a63-46ea-8a2a-ae35464a540b" alt="Original Image">
+    <script>
+        // Get the original image element
+        const originalImage = document.getElementById('original-image');
+
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas dimensions to match the image
+        canvas.width = originalImage.width;
+        canvas.height = originalImage.height;
+
+        // Draw the original image onto the canvas
+        ctx.drawImage(originalImage, 0, 0);
+
+        // Rotate the image on the canvas
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(45 * Math.PI / 180); // Adjust the rotation angle as needed
+        ctx.drawImage(originalImage, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Get the base64 data URL of the rotated image
+        const rotatedImageURL = canvas.toDataURL();
+
+        // Create a new image element for the rotated image
+        const rotatedImage = document.createElement('img');
+        rotatedImage.src = rotatedImageURL;
+        rotatedImage.classList.add('rotate-image');
+
+        // Append the rotated image to the document
+        document.body.appendChild(rotatedImage);
+        
+        // Log the URL of the rotated image to the console
+        console.log(rotatedImageURL);
+    </script>
+</body>
+</html>

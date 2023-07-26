@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>upward text</title>
+   <style>
+      canvas {
+     border: 1px solid #999;
+      }
+   </style>
+   <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/510/fabric.min.js"></script> -->
+   <script src="assets/js/fabric.min.js"></script>
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <canvas id="myCanvas" width="700" height="400"></canvas>
+  <script type="text/javascript">
+    // =======================================================
+// SETUP
+// =======================================================
+
+const canvas = new fabric.Canvas("myCanvas")
+const lastX = null
+const lastY = null
+canvas.backgroundColor="#222222"
+
+this.box = new fabric.Rect ({
+  width: 240,
+  height: 100,
+  fill: '#fff28a',
+  myType: "box"
+})
+
+canvas.add(this.box)
+this.box.center()
+
+
+// =======================================================
+// INTERACTIONS
+// =======================================================
+
+canvas.on({
+  'mouse:down': (opt) => {
+    
+    // Capture mouse coords for mousewheel-zoom-to-cursor
+    this.lastX = opt.pointer.x
+    this.lastY = opt.pointer.y     
+  },
+  
+  'mouse:up': (opt) => {
+    
+    // If we're zoomed out, we just spring the canvas back to center
+    if (canvas.getZoom() <= 1) {
+        resetBox('center-center')
+    
+    
+    // If we're zoomed in and user pans to a point where
+    // the box is no longer on-screen, then spring canvas back to center
+    } else { 
+      if (this.box.isOnScreen() == false) {
+          resetBox('center-center')
+      }
+    }
+  },
+
+  'mouse:wheel': (opt) => {
+    
+    // For zoom-to-cursor
+    
+    
+    // ---------------
+    // Wheel speed/resolution adjustment
+    // ---------------
+    let delta = 0
+    let wheelDelta = opt.e.wheelDelta
+    let deltaY = opt.e.deltaY
+    // CHROME WIN/MAC | SAFARI 7 MAC | OPERA WIN/MAC | EDGE
+    if (wheelDelta) {
+      delta = -wheelDelta / 120
+    }
+    // FIREFOX WIN / MAC | IE
+    if(deltaY) {
+      deltaY > 0 ? delta = 1 : delta = -1
+    }
+
+    let pointer = canvas.getPointer(opt.e)
+    let zoom = canvas.getZoom() - delta / 10
+
+    // limit zoom in
+    if (zoom > 3) zoom = 3
+
+    // limit zoom out and reset canvas to dead-center
+    if (zoom < 1) {
+      zoom = 1
+      this.reset(canvas)
+    }
+
+    canvas.zoomToPoint({
+      x: opt.e.offsetX,
+      y: opt.e.offsetY
+    }, zoom)
+
+    opt.e.preventDefault()
+    opt.e.stopPropagation()             
+
+    canvas.renderAll()
+    canvas.calcOffset()
+  },  
+    
+  'touch:drag': (opt) => {
+    
+    // For panning (click and drag)
+    
+    let startX = opt.self.start.x
+    let startY = opt.self.start.y
+    let currentX = opt.self.x
+    let currentY = opt.self.y
+    let xChange = currentX - this.lastX
+    let yChange = currentY - this.lastY      
+    let delta = new fabric.Point(xChange, yChange)
+    
+    console.log("canvas.getCenter.top: " + canvas.getCenter().top)
+    console.log("canvas.getVpCenter.y: " + canvas.getVpCenter().y)
+
+    canvas.relativePan(delta)
+    canvas.requestRenderAll()
+    this.lastX = currentX
+    this.lastY = currentY
+  }
+})
+
+
+
+
+function resetBox(position) {
+  
+  
+    let origZoom = canvas.getZoom()
+  let origX = canvas.viewportTransform[4]
+  let origY = canvas.viewportTransform[5]
+  
+  // Pan the entire canvas so that the active object is centered in the viewport.
+  // The object's relative position in the canvas should not change.
+ 
+  let object = this.box
+  let objWidth = object.getScaledWidth()
+  let objHeight = object.getScaledHeight()
+  let zoom = canvas.getZoom()
+  let panX = 0
+  let panY = 0
+  
+ 
+  console.log("object width is: " + object.width)
+   console.log(" object.getScaledWidth.x is: " + object.getScaledWidth())
+  
+  // WORKS - setViewportTransform
+  panX = ((canvas.getWidth() / zoom / 2) - (object.aCoords.tl.x) - (objWidth / 2)) * zoom
+  
+  if(!position || position == 'center-center') {
+    
+    panY = ((canvas.getHeight() / zoom / 2) - (object.aCoords.tl.y) - (objHeight / 2)) * zoom
+    
+  } else if (position == 'center-top') {
+    
+    panY = (-object.aCoords.tl.y + 50) * zoom
+    
+  } else if (position == 'center-bottom') {
+
+    panY = ((canvas.getHeight() / zoom) - (object.aCoords.tl.y) - (objHeight + 50)) * zoom
+    
+  }
+   
+  
+  
+  
+  fabric.util.animate({
+    startValue: origX,
+    endValue: panX,
+    duration: 500,
+    easing: fabric.util.ease["easeOutElastic"],
+    onChange: function(value) {
+     canvas.setViewportTransform([origZoom, 0, 0, origZoom, value, canvas.viewportTransform[5]])
+      //canvas.relativePan({x:value, y:canvas.viewportTransform[5]})
+      
+      // Alternative?
+      //canvas.relativePan( value , origY)
+    },
+
+    onComplete: function() {
+      canvas.renderAll();
+    }
+  })
+
+  fabric.util.animate({
+    startValue: origY,
+    endValue: panY,
+    duration: 500,
+    easing: fabric.util.ease["easeOutElastic"],
+    onChange: function(value) {
+      canvas.setViewportTransform([origZoom, 0, 0, origZoom, canvas.viewportTransform[4], value])
+      // canvas.relativePan({x:canvas.viewportTransform[4], y:value})
+      // Alternative?
+      // canvas.relativePan( origX , value)
+    },     
+    onComplete: function() {
+      canvas.renderAll();
+    }
+  })
+  
+
+  
+   //canvas.setViewportTransform([zoom, 0, 0, zoom, panX, panY])
+  
+  // ALSO WORKS - (for center/center) relative pan
+  /*
+  panX = (canvas.getVpCenter().x - object.getCenterPoint().x) * zoom
+  panY =  ((canvas.getVpCenter().y - object.getCenterPoint().y) * zoom)
+ canvas.relativePan({x:panX, y:panY})
+  */
+ // canvas.requestRenderAll()
+  //canvas.calcCoords
+
+}
+
+  </script>
+
+</body>
+</html>
